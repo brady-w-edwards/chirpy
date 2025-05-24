@@ -8,15 +8,14 @@ import (
 func main() {
 	const filepathRoot = "."
 	const port = "8080"
+	cfg := apiConfig{}
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-	mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot))))
+	mux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot)))))
+	mux.HandleFunc("/healthz", handlerReadiness)
+	mux.HandleFunc("/metrics", cfg.handlerMetrics)
+	mux.HandleFunc("/reset", cfg.handlerReset)
 
 	server := http.Server{
 		Addr:    ":" + port,
